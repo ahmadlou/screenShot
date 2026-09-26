@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Quick Screenshot</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <header class="popup__header">
+        <img src="../icons/icon48.png" alt="" width="28" height="28" />
+        <div>
+          <h1>Quick Screenshot</h1>
+          <p class="popup__shortcut" id="shortcut">Reading shortcut…</p>
+        </div>
+      </header>
+
+      <button type="button" id="capture" class="button button--primary">
+        Capture this tab
+      </button>
+
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+
+      <dl class="meta">
+        <div class="meta__row">
+          <dt>Saved to</dt>
+          <dd id="destination">Loading…</dd>
+        </div>
+        <div class="meta__row">
+          <dt>Filename</dt>
+          <dd id="filename-pattern">Loading…</dd>
+        </div>
+        <div class="meta__row">
+          <dt>Quality</dt>
+          <dd id="quality">Loading…</dd>
+        </div>
+      </dl>
+
+      <footer class="popup__footer">
+        <button type="button" id="open-options" class="link">Settings</button>
+      </footer>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

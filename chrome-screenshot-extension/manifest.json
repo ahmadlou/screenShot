@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Quick Screenshot",
+  "version": "1.0.0",
+  "description": "Capture the visible area of the current tab with a keyboard shortcut and save it automatically as a JPG.",
+  "minimum_chrome_version": "109",
+  "permissions": [
+    "activeTab",
+    "downloads",
+    "storage"
+  ],
+  "optional_permissions": [
+    "notifications",
+    "offscreen"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Quick Screenshot",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "capture-screenshot": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "MacCtrl+Shift+S"
+      },
+      "description": "Capture the visible area of the current tab"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

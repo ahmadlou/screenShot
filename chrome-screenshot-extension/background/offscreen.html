@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Quick Screenshot writer</title>
+  </head>
+  <body>
+    <!--
+      Offscreen document. It exists only to give the extension a DOM context in
+      which the File System Access API can create writable file streams, and it
+      is created on demand and closed as soon as the write finishes. It has no UI.
+    -->
+    <script type="module" src="offscreen.js"></script>
+  </body>
+</html>
