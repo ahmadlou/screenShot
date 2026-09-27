@@ -26,6 +26,7 @@ import { ensureOffscreenPermission } from '../background/offscreen-client.js';
 
 const SHORTCUTS_URL = 'chrome://extensions/shortcuts';
 const COMMAND_NAME = 'capture-screenshot';
+const FLOATING_BUTTON_ORIGINS = ['http://*/*', 'https://*/*'];
 
 const el = (id) => document.getElementById(id);
 
@@ -51,6 +52,7 @@ const ui = {
   qualityValue: el('quality-value'),
   notificationsEnabled: el('notifications-enabled'),
   errorNotificationsEnabled: el('error-notifications-enabled'),
+  floatingButtonEnabled: el('floating-button-enabled'),
   testCapture: el('test-capture'),
   resetSettings: el('reset-settings'),
   status: el('status'),
@@ -226,6 +228,8 @@ async function hydrate() {
   ui.qualityValue.textContent = `${settings.jpegQuality}%`;
   ui.notificationsEnabled.checked = settings.notificationsEnabled;
   ui.errorNotificationsEnabled.checked = settings.errorNotificationsEnabled;
+  const hasFloatingButtonAccess = await chrome.permissions.contains({ origins: FLOATING_BUTTON_ORIGINS });
+  ui.floatingButtonEnabled.checked = settings.floatingButtonEnabled && hasFloatingButtonAccess;
 
   renderSaveMode(settings.saveMode);
   renderFilenamePreview();
@@ -256,6 +260,7 @@ async function persist(extra = {}) {
     jpegQuality: Number(ui.jpegQuality.value),
     notificationsEnabled: ui.notificationsEnabled.checked,
     errorNotificationsEnabled: ui.errorNotificationsEnabled.checked,
+    floatingButtonEnabled: ui.floatingButtonEnabled.checked,
     ...extra
   });
 }
@@ -408,6 +413,32 @@ function init() {
   });
   ui.notificationsEnabled.addEventListener('change', persistDebounced);
   ui.errorNotificationsEnabled.addEventListener('change', persistDebounced);
+  ui.floatingButtonEnabled.addEventListener('change', async () => {
+    if (ui.floatingButtonEnabled.checked) {
+      const granted = await chrome.permissions.request({ origins: FLOATING_BUTTON_ORIGINS });
+      if (!granted) {
+        ui.floatingButtonEnabled.checked = false;
+        await persist();
+        setStatus('Website permission was not granted; the floating button remains off.', 'error');
+        return;
+      }
+      await persist();
+      const response = await chrome.runtime.sendMessage({ type: 'sync-floating-button' });
+      setStatus(
+        response?.ok
+          ? 'Floating screenshot button enabled on approved websites.'
+          : 'Permission was granted, but the floating button could not be started.',
+        response?.ok ? 'ok' : 'error'
+      );
+      return;
+    }
+
+    await persist();
+    await chrome.runtime.sendMessage({ type: 'hide-floating-button' });
+    await chrome.runtime.sendMessage({ type: 'sync-floating-button' });
+    await chrome.permissions.remove({ origins: FLOATING_BUTTON_ORIGINS });
+    setStatus('Floating screenshot button disabled and website permission removed.', 'ok');
+  });
 
   /* ---- Test & reset ---- */
 
@@ -432,6 +463,9 @@ function init() {
   ui.resetSettings.addEventListener('click', async () => {
     await resetSettings();
     await clearDirectoryHandle();
+    await chrome.runtime.sendMessage({ type: 'hide-floating-button' });
+    await chrome.runtime.sendMessage({ type: 'sync-floating-button' });
+    await chrome.permissions.remove({ origins: FLOATING_BUTTON_ORIGINS });
     await hydrate();
     setStatus('Settings restored to their defaults.', 'ok');
   });

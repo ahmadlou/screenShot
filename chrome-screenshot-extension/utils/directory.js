@@ -51,49 +51,61 @@ function openDatabase() {
 }
 
 /**
+ * Run one IndexedDB request while its transaction is still active.
+ *
+ * An IDBObjectStore is usable only for the lifetime of its transaction. The
+ * previous helper returned it *after* `oncomplete`, making every later
+ * get/put/delete throw TransactionInactiveError (a DOMException).
+ *
+ * @template T
  * @param {IDBTransactionMode} mode
- * @returns {Promise<IDBObjectStore>}
+ * @param {(store: IDBObjectStore) => IDBRequest<T>} createRequest
+ * @returns {Promise<T>}
  */
-async function getStore(mode) {
+async function runStoreRequest(mode, createRequest) {
   const db = await openDatabase();
-  const tx = db.transaction(STORE_NAME, mode);
-  const store = tx.objectStore(STORE_NAME);
   return new Promise((resolve, reject) => {
-    tx.oncomplete = () => {
+    let result;
+    let settled = false;
+    const finish = (callback) => {
+      if (settled) return;
+      settled = true;
       db.close();
-      resolve(store);
+      callback();
     };
-    tx.onerror = () => {
-      db.close();
-      reject(
-        new ScreenshotError(ErrorCode.DIRECTORY_UNAVAILABLE, {
-          detail: `IndexedDB transaction failed: ${tx.error?.message}`,
-          cause: tx.error
-        })
-      );
-    };
+
+    try {
+      const tx = db.transaction(STORE_NAME, mode);
+      tx.oncomplete = () => finish(() => resolve(result));
+      tx.onerror = () => finish(() => reject(new ScreenshotError(ErrorCode.DIRECTORY_UNAVAILABLE, {
+        detail: `IndexedDB transaction failed: ${tx.error?.message}`,
+        cause: tx.error
+      })));
+      tx.onabort = () => finish(() => reject(new ScreenshotError(ErrorCode.DIRECTORY_UNAVAILABLE, {
+        detail: `IndexedDB transaction aborted: ${tx.error?.message}`,
+        cause: tx.error
+      })));
+
+      const request = createRequest(tx.objectStore(STORE_NAME));
+      request.onsuccess = () => { result = request.result; };
+      // Do not prevent the default request-error action: it aborts the
+      // transaction and is then reported consistently by the handlers above.
+      request.onerror = () => {};
+    } catch (error) {
+      finish(() => reject(error));
+    }
   });
 }
 
 /** Persist the directory handle chosen by the user. */
 export async function setDirectoryHandle(handle) {
-  const store = await getStore('readwrite');
-  await new Promise((resolve, reject) => {
-    const request = store.put(handle, DIRECTORY_KEY);
-    request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
-  });
+  await runStoreRequest('readwrite', (store) => store.put(handle, DIRECTORY_KEY));
 }
 
 /** @returns {Promise<FileSystemDirectoryHandle|null>} */
 export async function getDirectoryHandle() {
   try {
-    const store = await getStore('readonly');
-    return await new Promise((resolve, reject) => {
-      const request = store.get(DIRECTORY_KEY);
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => reject(request.error);
-    });
+    return (await runStoreRequest('readonly', (store) => store.get(DIRECTORY_KEY))) || null;
   } catch (error) {
     console.warn('[directory] Could not read the stored directory handle.', error);
     return null;
@@ -103,12 +115,7 @@ export async function getDirectoryHandle() {
 /** Forget the stored handle (used when the user clears the folder). */
 export async function clearDirectoryHandle() {
   try {
-    const store = await getStore('readwrite');
-    await new Promise((resolve, reject) => {
-      const request = store.delete(DIRECTORY_KEY);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    await runStoreRequest('readwrite', (store) => store.delete(DIRECTORY_KEY));
     return true;
   } catch (error) {
     console.warn('[directory] Could not clear the stored handle.', error);

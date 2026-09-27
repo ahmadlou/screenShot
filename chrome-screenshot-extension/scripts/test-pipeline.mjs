@@ -80,6 +80,7 @@ globalThis.chrome = {
     OnInstalledReason: { INSTALL: 'install', UPDATE: 'update' },
     onMessage: { addListener: (fn) => { globalThis.__onMessage = fn; } },
     onInstalled: { addListener: (fn) => { globalThis.__onInstalled = fn; } },
+    onStartup: { addListener: (fn) => { globalThis.__onStartup = fn; } },
     sendMessage: async (msg) => globalThis.__onMessage(msg, {}, () => {})
   },
   commands: {
@@ -123,7 +124,15 @@ globalThis.chrome = {
         throw new Error('Cannot access contents of url "chrome://extensions"');
       }
       return `data:image/png;base64,${makePng(64, 48, [220, 40, 40]).toString('base64')}`;
-    }
+    },
+    query: async () => [],
+    sendMessage: async () => {}
+  },
+  scripting: {
+    getRegisteredContentScripts: async () => [],
+    registerContentScripts: async () => {},
+    unregisterContentScripts: async () => {},
+    executeScript: async () => []
   },
   windows: { WINDOW_ID_CURRENT: -2 },
   notifications: { create: async () => {}, clear: async () => {} },

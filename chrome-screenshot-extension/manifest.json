@@ -7,7 +7,12 @@
   "permissions": [
     "activeTab",
     "downloads",
+    "scripting",
     "storage"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "optional_permissions": [
     "notifications",

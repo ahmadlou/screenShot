@@ -43,12 +43,19 @@ async function exportsOf(target) {
         openOptionsPage: noop,
         onMessage: noopEvent,
         onInstalled: noopEvent,
+        onStartup: noopEvent,
         sendMessage: async () => ({ ok: true })
       },
       commands: { onCommand: noopEvent, getAll: async () => [] },
+      tabs: { captureVisibleTab: async () => '', query: async () => [], sendMessage: async () => {} },
+      scripting: {
+        getRegisteredContentScripts: async () => [],
+        registerContentScripts: async () => {},
+        unregisterContentScripts: async () => {},
+        executeScript: async () => []
+      },
       storage: { local: { get: async () => ({}), set: async () => {} } },
       downloads: { download: async () => 1, search: async () => [] },
-      tabs: { captureVisibleTab: async () => '' },
       windows: { WINDOW_ID_CURRENT: -2 },
       offscreen: { createDocument: noop, closeDocument: noop },
       permissions: { contains: async () => false, request: async () => true },
@@ -109,6 +116,7 @@ const referenced = [
   manifest.background?.service_worker,
   manifest.action?.default_popup,
   manifest.options_ui?.page,
+  ...(manifest.content_scripts || []).flatMap((script) => [...(script.js || []), ...(script.css || [])]),
   ...Object.values(manifest.icons || {}),
   ...Object.values(manifest.action?.default_icon || {})
 ].filter(Boolean);

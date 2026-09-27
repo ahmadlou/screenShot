@@ -12,270 +12,121 @@
         <img class="page__logo" src="../icons/icon128.png" alt="" width="56" height="56" />
         <div>
           <h1>Quick Screenshot</h1>
-          <p class="page__subtitle">
-            Press the hotkey to save the visible tab as a JPG. No dialogs, no interruption.
-          </p>
+          <p class="page__subtitle">Press the hotkey to save the visible tab as a JPG. No dialogs, no interruption.</p>
         </div>
       </header>
 
       <main>
-        <!-- ---------------- Shortcut ---------------- -->
         <section class="card" aria-labelledby="shortcut-heading">
           <h2 id="shortcut-heading">Keyboard shortcut</h2>
-
           <div class="field">
             <label class="field__label" for="shortcut-display">Active shortcut</label>
             <div class="shortcut-row">
-              <output id="shortcut-display" class="shortcut-display" aria-live="polite">
-                Reading&hellip;
-              </output>
-              <button type="button" id="open-shortcuts" class="button button--secondary">
-                Change in Chrome
-              </button>
+              <output id="shortcut-display" class="shortcut-display" aria-live="polite">Reading&hellip;</output>
+              <button type="button" id="open-shortcuts" class="button button--secondary">Change in Chrome</button>
             </div>
-            <p class="hint" id="shortcut-hint">
-              Loading the shortcut Chrome has registered for this extension&hellip;
-            </p>
+            <p class="hint" id="shortcut-hint">Loading the shortcut Chrome has registered for this extension&hellip;</p>
           </div>
-
           <details class="note">
             <summary>Why can&rsquo;t this page set the shortcut for me?</summary>
-            <p>
-              Chrome does not expose an API that lets an extension change its own
-              keyboard shortcut. <code>chrome.commands</code> can only
-              <em>read</em> the current binding
-              (<code>chrome.commands.getAll()</code>) and listen for it
-              (<code>chrome.commands.onCommand</code>) &mdash; there is no
-              <code>update()</code> or <code>set()</code> method. Rebinding is
-              intentionally reserved for the user, so an extension can never
-              silently steal a keyboard combination.
-            </p>
-            <p>
-              This page shows the binding that is <strong>really</strong> active
-              (read live from Chrome, not from our own settings), validates a
-              combination before you commit to it, and then takes you to the one
-              page where Chrome lets you apply it.
-            </p>
+            <p>Chrome does not expose an API that lets an extension change its own keyboard shortcut. <code>chrome.commands</code> can only read the current binding and listen for it; applying a change is intentionally reserved for the user.</p>
+            <p>This page shows the shortcut that is actually active, validates a combination, and then takes you to Chrome&rsquo;s shortcut page to apply it.</p>
           </details>
-
           <div class="field">
             <label class="field__label" for="shortcut-input">Check a combination</label>
-            <input
-              type="text"
-              id="shortcut-input"
-              class="input input--shortcut"
-              placeholder="Click here, then press your combination"
-              autocomplete="off"
-              spellcheck="false"
-              aria-describedby="shortcut-validation"
-            />
-
-        <!-- ---------------- Save location ---------------- -->
-        <section class="card" aria-labelledby="location-heading">
-          <h2 id="location-heading">Save location</h2>
-          <p class="hint hint--block">
-            Chrome extensions cannot silently write to an arbitrary absolute path
-            such as <code>C:\Screenshots</code>. Pick the approach that fits:
-          </p>
-
-          <div class="radio-group" role="radiogroup" aria-label="Save mode">
-            <label class="radio">
-              <input type="radio" name="save-mode" value="downloads" id="mode-downloads" />
-              <span class="radio__body">
-                <span class="radio__title">Downloads folder (default)</span>
-                <span class="radio__hint">
-                  Fully automatic, works everywhere. Files land in your browser&rsquo;s
-                  download directory, inside the sub-folder below. Chrome&rsquo;s own
-                  download location (<code>chrome://settings/downloads</code>) is the
-                  only way to change that base folder.
-                </span>
-              </span>
-            </label>
-
-            <label class="radio">
-              <input type="radio" name="save-mode" value="directory" id="mode-directory" />
-              <span class="radio__body">
-                <span class="radio__title">A folder I choose (exact path)</span>
-                <span class="radio__hint">
-                  Uses the File System Access API, so you can point at a real folder
-                  such as <code>C:\Screenshots</code>. Chrome shows a one-time
-                  permission prompt; after that, saving stays automatic.
-                </span>
-              </span>
-            </label>
-          </div>
-
-          <div class="field" id="download-folder-field">
-            <label class="field__label" for="download-folder">Sub-folder inside Downloads</label>
-            <input
-              type="text"
-              id="download-folder"
-              class="input"
-              placeholder="Screenshots"
-              autocomplete="off"
-              spellcheck="false"
-              aria-describedby="download-folder-hint"
-            />
-            <p class="hint" id="download-folder-hint">
-              Relative paths only, separated by <code>/</code>. Leave empty to save
-              straight into the Downloads folder. An absolute path typed here is
-              ignored by Chrome &mdash; use the option above for an exact location.
-            </p>
-          </div>
-
-          <div class="field" id="directory-field" hidden>
-            <label class="field__label">Chosen folder</label>
-            <p class="chosen-folder" id="chosen-folder">No folder chosen yet.</p>
+            <input type="text" id="shortcut-input" class="input input--shortcut" placeholder="Click here, then press your combination" autocomplete="off" spellcheck="false" aria-describedby="shortcut-validation" />
+            <p class="hint" id="shortcut-validation">Press a combination such as <code>Ctrl+Shift+S</code> to check it before applying it in Chrome.</p>
             <div class="button-row">
-              <button type="button" id="choose-directory" class="button button--secondary">
-
-        <!-- ---------------- Filename ---------------- -->
-        <section class="card" aria-labelledby="filename-heading">
-          <h2 id="filename-heading">Filename</h2>
-
-          <div class="field">
-            <label class="field__label" for="filename-prefix">Prefix</label>
-            <input
-              type="text"
-              id="filename-prefix"
-              class="input"
-              placeholder="photo_"
-              autocomplete="off"
-              spellcheck="false"
-              aria-describedby="filename-preview-hint"
-            />
-            <p class="hint">
-              Anything you like: <code>photo_</code>, <code>screenshot_</code>,
-              <code>capture_</code>. Characters that are illegal in file names are
-              removed automatically.
-            </p>
-          </div>
-
-          <div class="field">
-            <span class="field__label">Preview</span>
-            <output class="preview" id="filename-preview" aria-live="polite"></output>
-            <p class="hint" id="filename-preview-hint">
-              Uses your local date and time, in the format
-              <code>photo_YYYY-MM-DD_HH-mm-ss.jpg</code>. A screenshot taken in the
-              same second as another gets a millisecond or counter suffix, so nothing
-              is ever overwritten.
-            </p>
-          </div>
-        </section>
-
-        <!-- ---------------- Quality ---------------- -->
-        <section class="card" aria-labelledby="quality-heading">
-          <h2 id="quality-heading">JPG quality</h2>
-          <div class="field">
-            <label class="field__label" for="jpeg-quality">
-              Quality: <output id="quality-value" for="jpeg-quality">92%</output>
-            </label>
-            <input
-              type="range"
-              id="jpeg-quality"
-              class="range"
-              min="70"
-              max="100"
-              step="1"
-              value="92"
-            />
-            <p class="hint">
-              Between 70% and 100%. The visible tab is captured as PNG and re-encoded
-              to JPG at this quality, so a higher value means a larger file and less
-              compression.
-            </p>
-          </div>
-        </section>
-
-                Choose folder&hellip;
-              </button>
-
-        <!-- ---------------- Notifications & behaviour ---------------- -->
-        <section class="card" aria-labelledby="behaviour-heading">
-          <h2 id="behaviour-heading">Notifications &amp; behaviour</h2>
-
-          <label class="switch">
-            <input type="checkbox" id="notifications-enabled" />
-            <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
-            <span class="switch__text">
-              <span class="switch__title">Confirm each screenshot</span>
-              <span class="switch__hint">
-                Off by default &mdash; a notification after every capture is
-                disruptive when you are taking many in a row.
-              </span>
-            </span>
-          </label>
-
-          <label class="switch">
-            <input type="checkbox" id="error-notifications-enabled" checked />
-            <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
-            <span class="switch__text">
-              <span class="switch__title">Show a notification when a capture fails</span>
-              <span class="switch__hint">
-                A small, non-blocking notification. Nothing ever steals focus or
-                opens a dialog.
-              </span>
-            </span>
-          </label>
-
-          <p class="note note--inline">
-            Screenshots are always written straight to the folder configured
-            above. There is no Save As dialog and no confirmation step &mdash; not
-            even an option to turn one on.
-          </p>
-        </section>
-
-        <!-- ---------------- Status ---------------- -->
-        <section class="card" aria-labelledby="status-heading">
-          <h2 id="status-heading">Test &amp; status</h2>
-          <div class="button-row">
-            <button type="button" id="test-capture" class="button button--primary">
-              Take a test screenshot
-            </button>
-            <button type="button" id="reset-settings" class="button button--ghost">
-              Restore defaults
-            </button>
-          </div>
-          <p class="status" id="status" role="status" aria-live="polite">Ready.</p>
-          <p class="hint">
-            The test button captures whichever tab is active right now, so switch to
-            the page you want to capture first.
-          </p>
-        </section>
-      </main>
-
-      <footer class="page__footer">
-        <p>
-          Quick Screenshot <span id="version"></span> &mdash; everything runs
-          locally. No analytics, no uploads, no browsing history.
-        </p>
-      </footer>
-    </div>
-
-    <script type="module" src="options.js"></script>
-  </body>
-</html>
-
-              <button type="button" id="forget-directory" class="button button--ghost">
-                Forget folder
-              </button>
-            </div>
-            <p class="hint">
-              Chrome remembers this permission across restarts, but it can be revoked
-              at any time. If saving starts failing, choose the folder again.
-            </p>
-          </div>
-        </section>
-
-            <p class="hint" id="shortcut-validation">
-              Press a combination such as <code>Ctrl+Shift+S</code> to check it
-              before applying it in Chrome.
-            </p>
-            <div class="button-row">
-              <button type="button" id="save-shortcut" class="button button--secondary">
-                Remember this shortcut
-              </button>
+              <button type="button" id="save-shortcut" class="button button--secondary">Remember this shortcut</button>
               <button type="button" id="clear-shortcut" class="button button--ghost">Clear</button>
             </div>
           </div>
         </section>
+
+        <section class="card" aria-labelledby="location-heading">
+          <h2 id="location-heading">Save location</h2>
+          <p class="hint hint--block">Chrome extensions cannot silently write to an arbitrary absolute path such as <code>C:\Screenshots</code>. Pick the approach that fits:</p>
+          <div class="radio-group" role="radiogroup" aria-label="Save mode">
+            <label class="radio">
+              <input type="radio" name="save-mode" value="downloads" id="mode-downloads" />
+              <span class="radio__body"><span class="radio__title">Downloads folder (default)</span><span class="radio__hint">Fully automatic. Files land in the browser&rsquo;s download directory, inside the sub-folder below. Change the base folder in Chrome&rsquo;s download settings.</span></span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="save-mode" value="directory" id="mode-directory" />
+              <span class="radio__body"><span class="radio__title">A folder I choose (exact path)</span><span class="radio__hint">Choose a real folder such as <code>C:\Screenshots</code>. Chrome asks once for access; subsequent saves stay automatic.</span></span>
+            </label>
+          </div>
+          <div class="field" id="download-folder-field">
+            <label class="field__label" for="download-folder">Sub-folder inside Downloads</label>
+            <input type="text" id="download-folder" class="input" placeholder="Screenshots" autocomplete="off" spellcheck="false" aria-describedby="download-folder-hint" />
+            <p class="hint" id="download-folder-hint">Relative paths only, separated by <code>/</code>. Leave empty to save straight into Downloads.</p>
+          </div>
+          <div class="field" id="directory-field" hidden>
+            <label class="field__label">Chosen folder</label>
+            <p class="chosen-folder" id="chosen-folder">No folder chosen yet.</p>
+            <div class="button-row">
+              <button type="button" id="choose-directory" class="button button--secondary">Choose folder&hellip;</button>
+              <button type="button" id="forget-directory" class="button button--ghost">Forget folder</button>
+            </div>
+            <p class="hint">Chrome remembers this permission across restarts, but it can be revoked at any time. If saving starts failing, choose the folder again.</p>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="filename-heading">
+          <h2 id="filename-heading">Filename</h2>
+          <div class="field">
+            <label class="field__label" for="filename-prefix">Prefix</label>
+            <input type="text" id="filename-prefix" class="input" placeholder="photo_" autocomplete="off" spellcheck="false" aria-describedby="filename-preview-hint" />
+            <p class="hint">Anything you like: <code>photo_</code>, <code>screenshot_</code>, <code>capture_</code>. Illegal filename characters are removed automatically.</p>
+          </div>
+          <div class="field">
+            <span class="field__label">Preview</span>
+            <output class="preview" id="filename-preview" aria-live="polite"></output>
+            <p class="hint" id="filename-preview-hint">Uses local date and time. A screenshot taken in the same second gets a millisecond or counter suffix, so nothing is overwritten.</p>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="quality-heading">
+          <h2 id="quality-heading">JPG quality</h2>
+          <div class="field">
+            <label class="field__label" for="jpeg-quality">Quality: <output id="quality-value" for="jpeg-quality">92%</output></label>
+            <input type="range" id="jpeg-quality" class="range" min="70" max="100" step="1" value="92" />
+            <p class="hint">Between 70% and 100%. Higher quality means a larger file and less compression.</p>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="behaviour-heading">
+          <h2 id="behaviour-heading">Notifications &amp; behaviour</h2>
+          <label class="switch">
+            <input type="checkbox" id="notifications-enabled" />
+            <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+            <span class="switch__text"><span class="switch__title">Confirm each screenshot</span><span class="switch__hint">Off by default &mdash; a notification after every capture is disruptive when taking many screenshots.</span></span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="error-notifications-enabled" checked />
+            <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+            <span class="switch__text"><span class="switch__title">Show a notification when a capture fails</span><span class="switch__hint">A small, non-blocking notification. Nothing steals focus or opens a dialog.</span></span>
+          </label>
+          <label class="switch">
+            <input type="checkbox" id="floating-button-enabled" />
+            <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+            <span class="switch__text"><span class="switch__title">Show a floating screenshot button on websites</span><span class="switch__hint">A subtle lower-right button that hides before capture. Chrome asks for website access when this is enabled.</span></span>
+          </label>
+          <p class="note note--inline">Screenshots are always written straight to the folder configured above. There is no Save As dialog.</p>
+        </section>
+
+        <section class="card" aria-labelledby="status-heading">
+          <h2 id="status-heading">Test &amp; status</h2>
+          <div class="button-row">
+            <button type="button" id="test-capture" class="button button--primary">Take a test screenshot</button>
+            <button type="button" id="reset-settings" class="button button--ghost">Restore defaults</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite">Ready.</p>
+          <p class="hint">The test button captures whichever tab is active right now, so switch to the page you want to capture first.</p>
+        </section>
+      </main>
+      <footer class="page__footer"><p>Quick Screenshot <span id="version"></span> &mdash; everything runs locally. No analytics, no uploads, no browsing history.</p></footer>
+    </div>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

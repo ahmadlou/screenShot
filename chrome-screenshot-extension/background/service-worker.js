@@ -23,6 +23,8 @@ import { notifySuccess, notifyError } from '../utils/notifications.js';
 import { withOffscreenDocument } from './offscreen-client.js';
 
 const LOG = '[quick-screenshot]';
+const FLOATING_BUTTON_SCRIPT_ID = 'floating-screenshot-button';
+const FLOATING_BUTTON_ORIGINS = ['http://*/*', 'https://*/*'];
 
 /**
  * Captures are serialised through this promise chain. Without it, two fast
@@ -194,6 +196,48 @@ export function performCapture(options) {
   return result;
 }
 
+/** Keep the optional site-wide button registered only while it is enabled. */
+async function syncFloatingButton() {
+  const settings = await loadSettings();
+  const granted = await chrome.permissions.contains({ origins: FLOATING_BUTTON_ORIGINS });
+  const registered = await chrome.scripting.getRegisteredContentScripts({
+    ids: [FLOATING_BUTTON_SCRIPT_ID]
+  });
+
+  if (!settings.floatingButtonEnabled || !granted) {
+    if (registered.length) {
+      await chrome.scripting.unregisterContentScripts({ ids: [FLOATING_BUTTON_SCRIPT_ID] });
+    }
+    return;
+  }
+
+  if (!registered.length) {
+    await chrome.scripting.registerContentScripts([{
+      id: FLOATING_BUTTON_SCRIPT_ID,
+      matches: FLOATING_BUTTON_ORIGINS,
+      js: ['content/floating-button.js'],
+      runAt: 'document_idle',
+      persistAcrossSessions: true
+    }]);
+  }
+
+  // Dynamic registration affects future documents. Inject once into already
+  // open permitted tabs too; the content script is deliberately idempotent.
+  const tabs = await chrome.tabs.query({});
+  await Promise.allSettled(tabs.map((tab) => chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ['content/floating-button.js']
+  })));
+}
+
+/** Ask every live in-page control to disappear immediately. */
+async function hideFloatingButtons() {
+  const tabs = await chrome.tabs.query({});
+  await Promise.allSettled(tabs.map((tab) => chrome.tabs.sendMessage(tab.id, {
+    type: 'floating-button-disable'
+  })));
+}
+
 /* ------------------------------------------------------------------ *
  * Event listeners.
  * These MUST be registered synchronously at the top level of the module
@@ -209,9 +253,9 @@ chrome.commands.onCommand.addListener((command) => {
 });
 
 // Popup / options page can trigger a capture on demand.
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === 'capture-now') {
-    performCapture({ windowId: message.windowId })
+    performCapture({ windowId: message.windowId ?? sender?.tab?.windowId })
       .then(sendResponse)
       .catch((error) => {
         console.error(`${LOG} Manual capture failed.`, error);
@@ -231,6 +275,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message?.type === 'sync-floating-button') {
+    syncFloatingButton()
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => {
+        console.error(`${LOG} Could not sync floating button.`, error);
+        sendResponse({ ok: false, error: String(error) });
+      });
+    return true;
+  }
+
+  if (message?.type === 'hide-floating-button') {
+    hideFloatingButtons()
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({ ok: false, error: String(error) }));
+    return true;
+  }
+
   return false;
 });
 
@@ -240,4 +301,9 @@ chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
     chrome.runtime.openOptionsPage();
   }
+  void syncFloatingButton();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  void syncFloatingButton();
 });

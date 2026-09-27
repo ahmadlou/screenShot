@@ -100,6 +100,12 @@ check('errorNotificationsEnabled defaults to on', () => {
   assert.equal(normalizeSettings({}).errorNotificationsEnabled, true);
 });
 
+check('floating button is disabled unless explicitly enabled', () => {
+  assert.equal(normalizeSettings({}).floatingButtonEnabled, false);
+  assert.equal(normalizeSettings({ floatingButtonEnabled: true }).floatingButtonEnabled, true);
+  assert.equal(normalizeSettings({ floatingButtonEnabled: 'yes' }).floatingButtonEnabled, false);
+});
+
 check('unknown saveMode falls back to downloads', () => {
   assert.equal(normalizeSettings({ saveMode: 'evil' }).saveMode, SaveMode.DOWNLOADS);
 });

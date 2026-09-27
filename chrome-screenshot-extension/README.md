@@ -160,11 +160,26 @@ name.
 | `activeTab`                | `captureVisibleTab()` for the tab the user is on. Granted by the hotkey or toolbar click, so **no** `<all_urls>` host permission is requested. |
 | `downloads`                | Saving the file without a dialog. |
 | `storage`                  | `chrome.storage.local` for your settings. |
+| `scripting`                | Registers the optional floating capture button after the user enables it. |
 | `notifications` (optional) | Only requested if you turn notifications on. |
 | `offscreen` (optional)     | Only requested if you choose the folder-you-choose mode. |
+| Website access (optional)  | Requested only when you enable the floating capture button; removed again when it is disabled. |
 
-Not requested: `<all_urls>`, `tabs`, `webRequest`, `cookies`, `history`,
-`scripting`, `debugger`.
+Not requested: `<all_urls>` as a required permission, `tabs`, `webRequest`,
+`cookies`, `history`, `debugger`.
+
+### Floating capture button
+
+In **Options → Notifications & behaviour**, enable **Show a floating screenshot
+button on websites**. Chrome then asks for website access, and a low-opacity
+camera button appears at the lower-right of normal HTTP(S) pages. It becomes
+nearly opaque on hover or keyboard focus. The control hides for two rendered
+frames before the capture begins, so it is not present in the saved JPG.
+
+This feature cannot run on Chrome internal pages, the Chrome Web Store,
+DevTools, other extensions, or other pages Chrome restricts. Switching the
+setting off removes both the controls in open pages and the optional website
+permission.
 
 ---
 
